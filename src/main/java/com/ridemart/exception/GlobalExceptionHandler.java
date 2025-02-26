@@ -30,16 +30,22 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<?> handleValidationException(ValidationException ex) {
-        log.debug("Validation error: {}", ex.getErrors());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getErrors());
+    @ExceptionHandler(AdvertisementNotFoundException.class)
+    public ResponseEntity<?> handleAdvertisementNotFoundException(AdvertisementNotFoundException ex) {
+        log.warn("Advertisement not found: {}", ex.getMessage());
+        return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGeneralException(Exception ex) {
         log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
         return buildErrorResponse("An unexpected error occurred.", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(MissingMotorbikeDetailsException.class)
+    public ResponseEntity<?> handleMissingMotorbikeDetailsException(MissingMotorbikeDetailsException ex) {
+        log.warn("Bad request: {}", ex.getMessage());
+        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     private ResponseEntity<?> buildErrorResponse(String message, HttpStatus status) {
