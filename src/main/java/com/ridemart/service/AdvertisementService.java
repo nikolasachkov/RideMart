@@ -1,5 +1,6 @@
 package com.ridemart.service;
 
+import com.ridemart.dto.AdvertisementFilterDto;
 import com.ridemart.dto.AdvertisementRequestDto;
 import com.ridemart.dto.AdvertisementResponseDto;
 import com.ridemart.entity.Advertisement;
@@ -10,13 +11,16 @@ import com.ridemart.exception.MissingMotorbikeDetailsException;
 import com.ridemart.exception.UserNotFoundException;
 import com.ridemart.mapper.AdvertisementMapper;
 import com.ridemart.repository.AdvertisementRepository;
+import com.ridemart.repository.AdvertisementSpecifications;
 import com.ridemart.repository.UserRepository;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -76,27 +80,16 @@ public class AdvertisementService {
         Advertisement advertisement = getAdvertisementByIdOrThrow(id);
         validateAdvertisementOwnership(advertisement);
 
-        if (dto.getTitle() != null) {
-            advertisement.setTitle(dto.getTitle());
-        }
-        if (dto.getDescription() != null) {
-            advertisement.setDescription(dto.getDescription());
-        }
-        if (dto.getCity() != null) {
-            advertisement.setCity(dto.getCity());
-        }
-        if (dto.getStreet() != null) {
-            advertisement.setStreet(dto.getStreet());
-        }
-        if (dto.getStreetNumber() != null) {
-            advertisement.setStreetNumber(dto.getStreetNumber());
-        }
+        advertisement.setTitle(dto.getTitle());
+        advertisement.setDescription(dto.getDescription());
+        advertisement.setCity(dto.getCity());
+        advertisement.setStreet(dto.getStreet());
+        advertisement.setStreetNumber(dto.getStreetNumber());
 
-        if (dto.getMotorbikeDetails() != null) {
-            motorbikeDetailsService.updateMotorbikeDetails(advertisement.getMotorbikeDetails(), dto.getMotorbikeDetails());
-        }
+        motorbikeDetailsService.updateMotorbikeDetails(advertisement.getMotorbikeDetails(), dto.getMotorbikeDetails());
+        photoService.updatePhotosForAdvertisement(advertisement.getId(), dto.getPhotoUrls());
 
-        photoService.updatePhotosForAdvertisement(id, dto.getPhotoUrls());
+        advertisement.setUpdatedAt(LocalDateTime.now());
 
         return advertisementMapper.toResponseDto(advertisementRepository.save(advertisement));
     }
@@ -107,6 +100,12 @@ public class AdvertisementService {
         validateAdvertisementOwnership(advertisement);
 
         advertisementRepository.delete(advertisement);
+    }
+
+    public List<AdvertisementResponseDto> filterAdvertisements(AdvertisementFilterDto filterDto) {
+        Specification<Advertisement> specification = AdvertisementSpecifications.withFilters(filterDto);
+        List<Advertisement> advertisements = advertisementRepository.findAll(specification);
+        return advertisementMapper.toResponseDtoList(advertisements);
     }
 
     public AdvertisementResponseDto getAdvertisementById(Integer id) {

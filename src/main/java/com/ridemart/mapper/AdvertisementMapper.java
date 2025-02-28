@@ -6,6 +6,8 @@ import com.ridemart.entity.Advertisement;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface AdvertisementMapper {
 
@@ -13,4 +15,5 @@ public interface AdvertisementMapper {
 
     @Mapping(source = "user.id", target = "userId")
     AdvertisementResponseDto toResponseDto(Advertisement advertisement);
+    List<AdvertisementResponseDto> toResponseDtoList(List<Advertisement> advertisements);
 }
