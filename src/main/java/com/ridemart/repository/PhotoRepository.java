@@ -9,5 +9,4 @@ import java.util.List;
 @Repository
 public interface PhotoRepository extends JpaRepository<Photo, Integer> {
     List<Photo> findByAdvertisementId(Integer advertisementId);
-    void deleteByAdvertisementId(Integer advertisementId);
 }

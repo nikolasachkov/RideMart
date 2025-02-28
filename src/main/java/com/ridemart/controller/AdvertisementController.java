@@ -1,5 +1,6 @@
 package com.ridemart.controller;
 
+import com.ridemart.dto.AdvertisementFilterDto;
 import com.ridemart.dto.AdvertisementRequestDto;
 import com.ridemart.dto.AdvertisementResponseDto;
 import com.ridemart.service.AdvertisementService;
@@ -21,6 +22,11 @@ public class AdvertisementController {
     @GetMapping
     public List<AdvertisementResponseDto> getAllAdvertisements() {
         return advertisementService.getAllAdvertisements();
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<AdvertisementResponseDto>> filterAdvertisements(AdvertisementFilterDto filterDto) {
+        return ResponseEntity.ok(advertisementService.filterAdvertisements(filterDto));
     }
 
     @PostMapping

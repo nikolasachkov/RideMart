@@ -1,7 +1,7 @@
 package com.ridemart.enums;
 
 public enum Model {
-    EXC_300, EXC_250, EXC_500,
+    EXC_300, EXC_250, EXC_450, EXC_500,
     TE_300, FE_350, FE_501,
     WR450F, WR250F,
     CRF_250RX, CRF_450RX,
