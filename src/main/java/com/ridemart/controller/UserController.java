@@ -2,6 +2,7 @@ package com.ridemart.controller;
 
 import com.ridemart.dto.UserDto;
 import com.ridemart.dto.UserResponseDto;
+import com.ridemart.entity.User;
 import com.ridemart.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,14 +34,22 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserDto userDto) {
-        return ResponseEntity.ok(userService.updateUser(id, userDto));
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDto> getAuthenticatedUser() {
+        UserResponseDto userDto = userService.getAuthenticatedUserDto();
+        return ResponseEntity.ok(userDto);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
-        userService.deleteUser(id);
+    @PutMapping("/me")
+    public ResponseEntity<?> updateUser(@RequestBody UserDto userDto) {
+        User user = userService.getAuthenticatedUser();
+        return ResponseEntity.ok(userService.updateUser(user.getId(), userDto));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<?> deleteUser() {
+        User user = userService.getAuthenticatedUser();
+        userService.deleteUser(user.getId());
         return ResponseEntity.status(204).body("User deleted successfully.");
     }
 }

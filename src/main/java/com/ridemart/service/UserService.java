@@ -10,6 +10,9 @@ import com.ridemart.exception.UserNotFoundException;
 import com.ridemart.mapper.UserMapper;
 import com.ridemart.repository.UserRepository;
 import com.ridemart.util.PasswordUtil;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,6 +45,16 @@ public class UserService {
         return userMapper.toResponseDto(user);
     }
 
+    public User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new UserNotFoundException(authentication.getName()));
+    }
+
+    public UserResponseDto getAuthenticatedUserDto() {
+        return userMapper.toResponseDto(getAuthenticatedUser());
+    }
+
     public UserResponseDto updateUser(Integer id, UserDto userDto) {
         User updatedUser = userRepository.findById(id)
                 .map(existingUser -> {
@@ -54,12 +67,15 @@ public class UserService {
         return userMapper.toResponseDto(updatedUser);
     }
 
-    public boolean deleteUser(Integer id) {
-        if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException(id);
+    public void deleteUser(Integer id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + id));
+
+        if (!SecurityContextHolder.getContext().getAuthentication().getName().equals(user.getUsername())) {
+            throw new AccessDeniedException("You can only delete your own account.");
         }
-        userRepository.deleteById(id);
-        return true;
+
+        userRepository.delete(user);
     }
 
     public User findByUsername(String username) {
@@ -73,6 +89,12 @@ public class UserService {
             throw new InvalidCredentialsException();
         }
         return true;
+    }
+
+    public Integer getUserIdFromUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username))
+                .getId();
     }
 
     public void registerUser(RegisterRequestDto registerRequestDto) {

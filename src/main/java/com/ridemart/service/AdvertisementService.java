@@ -8,15 +8,12 @@ import com.ridemart.entity.MotorbikeDetails;
 import com.ridemart.entity.User;
 import com.ridemart.exception.AdvertisementNotFoundException;
 import com.ridemart.exception.MissingMotorbikeDetailsException;
-import com.ridemart.exception.UserNotFoundException;
 import com.ridemart.mapper.AdvertisementMapper;
 import com.ridemart.repository.AdvertisementRepository;
 import com.ridemart.repository.AdvertisementSpecifications;
 import com.ridemart.repository.UserRepository;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,18 +25,18 @@ import java.util.stream.Collectors;
 public class AdvertisementService {
 
     private final AdvertisementRepository advertisementRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final MotorbikeDetailsService motorbikeDetailsService;
     private final PhotoService photoService;
     private final AdvertisementMapper advertisementMapper;
 
     public AdvertisementService(AdvertisementRepository advertisementRepository,
-                                UserRepository userRepository,
+                                UserRepository userRepository, UserService userService,
                                 MotorbikeDetailsService motorbikeDetailsService,
                                 PhotoService photoService,
                                 AdvertisementMapper advertisementMapper) {
         this.advertisementRepository = advertisementRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
         this.motorbikeDetailsService = motorbikeDetailsService;
         this.photoService = photoService;
         this.advertisementMapper = advertisementMapper;
@@ -53,7 +50,7 @@ public class AdvertisementService {
 
     @Transactional
     public AdvertisementResponseDto createAdvertisement(AdvertisementRequestDto dto) {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
 
         if (dto.getMotorbikeDetails() == null) {
             throw new MissingMotorbikeDetailsException();
@@ -77,6 +74,7 @@ public class AdvertisementService {
 
     @Transactional
     public AdvertisementResponseDto updateAdvertisement(Integer id, AdvertisementRequestDto dto) {
+
         Advertisement advertisement = getAdvertisementByIdOrThrow(id);
         validateAdvertisementOwnership(advertisement);
 
@@ -87,7 +85,10 @@ public class AdvertisementService {
         advertisement.setStreetNumber(dto.getStreetNumber());
 
         motorbikeDetailsService.updateMotorbikeDetails(advertisement.getMotorbikeDetails(), dto.getMotorbikeDetails());
-        photoService.updatePhotosForAdvertisement(advertisement.getId(), dto.getPhotoUrls());
+
+        if (dto.getPhotoUrls() != null && !dto.getPhotoUrls().isEmpty()) {
+            photoService.updatePhotosForAdvertisement(id, dto.getPhotoUrls());
+        }
 
         advertisement.setUpdatedAt(LocalDateTime.now());
 
@@ -117,16 +118,17 @@ public class AdvertisementService {
                 .orElseThrow(() -> new AdvertisementNotFoundException(id));
     }
 
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new UserNotFoundException(authentication.getName()));
-    }
-
     private void validateAdvertisementOwnership(Advertisement advertisement) {
-        User user = getAuthenticatedUser();
+        User user = userService.getAuthenticatedUser();
         if (!advertisement.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You can only modify your own advertisements.");
         }
     }
+
+    public List<AdvertisementResponseDto> getMyAdvertisements() {
+        User user = userService.getAuthenticatedUser();
+        List<Advertisement> myAds = advertisementRepository.findByUserId(user.getId());
+        return advertisementMapper.toResponseDtoList(myAds);
+    }
+
 }
