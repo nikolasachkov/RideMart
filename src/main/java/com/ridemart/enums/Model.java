@@ -1,0 +1,43 @@
+package com.ridemart.enums;
+
+public enum Model {
+    EXC_300, EXC_250, EXC_450, EXC_500,
+    TE_300, FE_350, FE_501,
+    WR450F, WR250F,
+    CRF_250RX, CRF_450RX,
+    RMX_450Z,
+    SE_300, SE_250,
+    MR_300, MR_250,
+    EC_300, EC_250,
+    KLX_300,
+    RR_300, RR_250,
+    TF_250X,
+
+    SX_125, SX_250, SX_450F,
+    TC_125, TC_250, FC_450,
+    YZ_125, YZ_250, YZ_450F,
+    CRF_250R, CRF_450R,
+    RMZ_250, RMZ_450,
+    MC_125, MC_250, MC_450,
+    KX_250, KX_450,
+    RX_300,
+
+    ST_300, ST_250,
+    TXT_300, TXT_250,
+    EVO_300, EVO_250,
+    TR_250X,
+
+    SMC_690, RC_390,
+    HUSQVARNA_701_SUPERMOTO,
+    WR250X,
+    FMX_650,
+    DRZ_400SM,
+
+    _1290_SUPER_ADVENTURE, _890_ADVENTURE,
+    NORDEN_901,
+    TENERE_700,
+    AFRICA_TWIN,
+    VSTROM_1050,
+    VERSYS_1000,
+    TIGER_900
+}
