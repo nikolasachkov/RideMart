@@ -73,6 +73,4 @@ public class PhotoService {
             addPhotosToAdvertisement(advertisementId, newPhotosToAdd);
         }
     }
-
-
 }

@@ -34,6 +34,12 @@ public class AdvertisementController {
         return ResponseEntity.ok(advertisementService.createAdvertisement(dto));
     }
 
+    @GetMapping("/my-ads")
+    public ResponseEntity<List<AdvertisementResponseDto>> getMyAdvertisements() {
+        return ResponseEntity.ok(advertisementService.getMyAdvertisements());
+    }
+
+
     @GetMapping("/{id}")
     public ResponseEntity<AdvertisementResponseDto> getAdvertisementById(@PathVariable Integer id) {
         return ResponseEntity.ok(advertisementService.getAdvertisementById(id));

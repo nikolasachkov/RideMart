@@ -5,7 +5,6 @@ import com.ridemart.dto.UserDto;
 import com.ridemart.dto.UserResponseDto;
 import com.ridemart.entity.User;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
 
 import java.util.List;
