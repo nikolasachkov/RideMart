@@ -12,26 +12,8 @@ CREATE TABLE user (
     updated_at DATETIME
 );
 
-CREATE TABLE advertisement (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    title VARCHAR(32) NOT NULL,
-    description TEXT,
-    created_at DATETIME,
-    updated_at DATETIME,
-    FOREIGN KEY (user_id) REFERENCES user(id)
-);
-
-CREATE TABLE photo (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    advertisement_id INT NOT NULL UNIQUE,
-    photo_url VARCHAR(255),
-    FOREIGN KEY (advertisement_id) REFERENCES advertisement(id)
-);
-
 CREATE TABLE motorbike_details (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    advertisement_id INT NOT NULL UNIQUE,
     price INT NOT NULL,
     make VARCHAR(32) NOT NULL,
     model VARCHAR(32) NOT NULL,
@@ -40,6 +22,36 @@ CREATE TABLE motorbike_details (
     engine_size INT NOT NULL,
     engine_type VARCHAR(16) NOT NULL,
     motorbike_type VARCHAR(16) NOT NULL,
-    fuel_system_type VARCHAR(16) NOT NULL,
-    FOREIGN KEY (advertisement_id) REFERENCES advertisement(id)
+    fuel_system_type VARCHAR(16) NOT NULL
+);
+
+CREATE TABLE advertisement (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    motorbike_details_id INT NOT NULL UNIQUE,
+    title VARCHAR(32) NOT NULL,
+    description TEXT,
+	city VARCHAR(32) NOT NULL,
+    street VARCHAR(32) NOT NULL,
+    street_number VARCHAR(8) NOT NULL,
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (motorbike_details_id) REFERENCES motorbike_details(id) ON DELETE CASCADE
+);
+
+CREATE TABLE photo (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    advertisement_id INT NOT NULL,
+    photo_url VARCHAR(255),
+    FOREIGN KEY (advertisement_id) REFERENCES advertisement(id) ON DELETE CASCADE
+);
+
+CREATE TABLE saved_advertisement (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    advertisement_id INT NOT NULL,
+    UNIQUE(user_id, advertisement_id),
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY (advertisement_id) REFERENCES advertisement(id) ON DELETE CASCADE
 );
