@@ -1,12 +1,14 @@
 package com.ridemart.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "saved_advertisement", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"user_id", "advertisement_id"})
 })

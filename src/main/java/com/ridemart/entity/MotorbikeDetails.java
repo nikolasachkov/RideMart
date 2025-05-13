@@ -2,12 +2,14 @@ package com.ridemart.entity;
 
 import com.ridemart.enums.*;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class MotorbikeDetails {
 
     @Id

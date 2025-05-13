@@ -10,6 +10,8 @@ import com.ridemart.exception.UserNotFoundException;
 import com.ridemart.mapper.UserMapper;
 import com.ridemart.repository.UserRepository;
 import com.ridemart.util.PasswordUtil;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,28 +20,26 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@AllArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
-        this.userRepository = userRepository;
-        this.userMapper = userMapper;
-    }
-
     public List<UserResponseDto> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        return userMapper.toResponseDtoList(users);
+        log.info("Fetching all users");
+        return userMapper.toResponseDtoList(userRepository.findAll());
     }
 
     public UserResponseDto saveUser(UserDto userDto) {
+        log.info("Saving user: {}", userDto.getUsername());
         User user = userMapper.toEntity(userDto);
-        User savedUser = userRepository.save(user);
-        return userMapper.toResponseDto(savedUser);
+        return userMapper.toResponseDto(userRepository.save(user));
     }
 
     public UserResponseDto getUserById(Integer id) {
+        log.info("Fetching user by ID: {}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
         return userMapper.toResponseDto(user);
@@ -52,10 +52,12 @@ public class UserService {
     }
 
     public UserResponseDto getAuthenticatedUserDto() {
+        log.info("Fetching authenticated user DTO");
         return userMapper.toResponseDto(getAuthenticatedUser());
     }
 
     public UserResponseDto updateUser(Integer id, UserDto userDto) {
+        log.info("Updating user with ID {}", id);
         User updatedUser = userRepository.findById(id)
                 .map(existingUser -> {
                     existingUser.setUsername(userDto.getUsername());
@@ -68,6 +70,7 @@ public class UserService {
     }
 
     public void deleteUser(Integer id) {
+        log.info("Deleting user with ID {}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found: " + id));
 
@@ -84,6 +87,7 @@ public class UserService {
     }
 
     public boolean verifyUserCredentials(String username, String password) {
+        log.info("Verifying credentials for {}", username);
         User user = findByUsername(username);
         if (!PasswordUtil.verifyPassword(password, user.getPassword())) {
             throw new InvalidCredentialsException();
@@ -98,6 +102,7 @@ public class UserService {
     }
 
     public void registerUser(RegisterRequestDto registerRequestDto) {
+        log.info("Registering new user {}", registerRequestDto.getUsername());
         if (userRepository.findByUsername(registerRequestDto.getUsername()).isPresent()) {
             throw new UserAlreadyExistsException("Username");
         }

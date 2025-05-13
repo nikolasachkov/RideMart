@@ -1,10 +1,10 @@
 package com.ridemart.controller;
 
 import com.ridemart.enums.Make;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -12,23 +12,29 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/motorcycles")
+@AllArgsConstructor
+@Slf4j
 public class MakeModelController {
 
     @GetMapping("/makes")
-    public List<String> getMakes() {
-        return Arrays.stream(Make.values())
+    public ResponseEntity<List<String>> getMakes() {
+        log.info("Fetching all available makes");
+        List<String> makes = Arrays.stream(Make.values())
                 .map(Enum::name)
                 .toList();
+        return ResponseEntity.ok(makes);
     }
 
     @GetMapping("/models/{make}")
-    public List<String> getModelsByMake(@PathVariable String make) {
-        return Make.valueOf(make.toUpperCase()).getModels();
+    public ResponseEntity<List<String>> getModelsByMake(@PathVariable String make) {
+        log.info("Fetching models for make: {}", make);
+        List<String> models = Make.valueOf(make.toUpperCase()).getModels();
+        return ResponseEntity.ok(models);
     }
 
     @GetMapping("/all")
-    public Map<String, List<String>> getAllMakesAndModels() {
-        return Make.getAllMakesAndModels();
+    public ResponseEntity<Map<String, List<String>>> getAllMakesAndModels() {
+        log.info("Fetching all makes and their models");
+        return ResponseEntity.ok(Make.getAllMakesAndModels());
     }
 }
-

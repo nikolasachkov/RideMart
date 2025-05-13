@@ -11,7 +11,8 @@ import com.ridemart.exception.MissingMotorbikeDetailsException;
 import com.ridemart.mapper.AdvertisementMapper;
 import com.ridemart.repository.AdvertisementRepository;
 import com.ridemart.repository.AdvertisementSpecifications;
-import com.ridemart.repository.UserRepository;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
+@Slf4j
 public class AdvertisementService {
 
     private final AdvertisementRepository advertisementRepository;
@@ -30,19 +33,8 @@ public class AdvertisementService {
     private final PhotoService photoService;
     private final AdvertisementMapper advertisementMapper;
 
-    public AdvertisementService(AdvertisementRepository advertisementRepository,
-                                UserRepository userRepository, UserService userService,
-                                MotorbikeDetailsService motorbikeDetailsService,
-                                PhotoService photoService,
-                                AdvertisementMapper advertisementMapper) {
-        this.advertisementRepository = advertisementRepository;
-        this.userService = userService;
-        this.motorbikeDetailsService = motorbikeDetailsService;
-        this.photoService = photoService;
-        this.advertisementMapper = advertisementMapper;
-    }
-
     public List<AdvertisementResponseDto> getAllAdvertisements() {
+        log.info("Fetching all advertisements");
         return advertisementRepository.findAll().stream()
                 .map(advertisementMapper::toResponseDto)
                 .collect(Collectors.toList());
@@ -50,6 +42,7 @@ public class AdvertisementService {
 
     @Transactional
     public AdvertisementResponseDto createAdvertisement(AdvertisementRequestDto dto) {
+        log.info("Creating new advertisement for user");
         User user = userService.getAuthenticatedUser();
 
         if (dto.getMotorbikeDetails() == null) {
@@ -71,10 +64,9 @@ public class AdvertisementService {
         return advertisementMapper.toResponseDto(savedAdvertisement);
     }
 
-
     @Transactional
     public AdvertisementResponseDto updateAdvertisement(Integer id, AdvertisementRequestDto dto) {
-
+        log.info("Updating advertisement with ID {}", id);
         Advertisement advertisement = getAdvertisementByIdOrThrow(id);
         validateAdvertisementOwnership(advertisement);
 
@@ -97,19 +89,21 @@ public class AdvertisementService {
 
     @Transactional
     public void deleteAdvertisement(Integer id) {
+        log.info("Deleting advertisement with ID {}", id);
         Advertisement advertisement = getAdvertisementByIdOrThrow(id);
         validateAdvertisementOwnership(advertisement);
-
         advertisementRepository.delete(advertisement);
     }
 
     public List<AdvertisementResponseDto> filterAdvertisements(AdvertisementFilterDto filterDto) {
+        log.info("Filtering advertisements with criteria: {}", filterDto);
         Specification<Advertisement> specification = AdvertisementSpecifications.withFilters(filterDto);
         List<Advertisement> advertisements = advertisementRepository.findAll(specification);
         return advertisementMapper.toResponseDtoList(advertisements);
     }
 
     public AdvertisementResponseDto getAdvertisementById(Integer id) {
+        log.info("Fetching advertisement by ID {}", id);
         return advertisementMapper.toResponseDto(getAdvertisementByIdOrThrow(id));
     }
 
@@ -126,9 +120,9 @@ public class AdvertisementService {
     }
 
     public List<AdvertisementResponseDto> getMyAdvertisements() {
+        log.info("Fetching advertisements for authenticated user");
         User user = userService.getAuthenticatedUser();
         List<Advertisement> myAds = advertisementRepository.findByUserId(user.getId());
         return advertisementMapper.toResponseDtoList(myAds);
     }
-
 }
