@@ -9,5 +9,8 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface MotorbikeDetailsMapper {
     MotorbikeDetails toEntity(MotorbikeDetailsRequestDto dto);
+
+    @Mapping(source = "model.make.name", target = "make")
+    @Mapping(source = "model.name",      target = "model")
     MotorbikeDetailsResponseDto toResponseDto(MotorbikeDetails motorbikeDetails);
 }

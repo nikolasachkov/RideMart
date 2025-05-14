@@ -19,12 +19,8 @@ public class MotorbikeDetails {
     @Column(nullable = false)
     private Integer price;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Make make;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @OneToOne(optional = false)
+    @JoinColumn(name = "model_id", nullable = false)
     private Model model;
 
     @Column(nullable = false)
