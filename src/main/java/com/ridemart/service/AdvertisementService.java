@@ -4,13 +4,15 @@ import com.ridemart.dto.AdvertisementFilterDto;
 import com.ridemart.dto.AdvertisementRequestDto;
 import com.ridemart.dto.AdvertisementResponseDto;
 import com.ridemart.entity.Advertisement;
+import com.ridemart.entity.Model;
 import com.ridemart.entity.MotorbikeDetails;
-import com.ridemart.entity.User;
 import com.ridemart.exception.AdvertisementNotFoundException;
 import com.ridemart.exception.MissingMotorbikeDetailsException;
 import com.ridemart.mapper.AdvertisementMapper;
 import com.ridemart.repository.AdvertisementRepository;
 import com.ridemart.repository.AdvertisementSpecifications;
+import com.ridemart.repository.MakeRepository;
+import com.ridemart.repository.ModelRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
@@ -28,10 +30,12 @@ import java.util.stream.Collectors;
 public class AdvertisementService {
 
     private final AdvertisementRepository advertisementRepository;
-    private final UserService userService;
+    private final UserService             userService;
     private final MotorbikeDetailsService motorbikeDetailsService;
-    private final PhotoService photoService;
-    private final AdvertisementMapper advertisementMapper;
+    private final PhotoService            photoService;
+    private final AdvertisementMapper     advertisementMapper;
+    private final MakeRepository makeRepository;
+    private final ModelRepository modelRepository;
 
     public List<AdvertisementResponseDto> getAllAdvertisements() {
         log.info("Fetching all advertisements");
@@ -43,67 +47,80 @@ public class AdvertisementService {
     @Transactional
     public AdvertisementResponseDto createAdvertisement(AdvertisementRequestDto dto) {
         log.info("Creating new advertisement for user");
-        User user = userService.getAuthenticatedUser();
+        var user = userService.getAuthenticatedUser();
 
         if (dto.getMotorbikeDetails() == null) {
             throw new MissingMotorbikeDetailsException();
         }
 
-        MotorbikeDetails motorbikeDetails = motorbikeDetailsService.createMotorbikeDetails(dto.getMotorbikeDetails());
+        MotorbikeDetails details = motorbikeDetailsService.createMotorbikeDetails(dto.getMotorbikeDetails());
+        var ad = advertisementMapper.toEntity(dto);
+        ad.setUser(user);
+        ad.setMotorbikeDetails(details);
 
-        Advertisement advertisement = advertisementMapper.toEntity(dto);
-        advertisement.setUser(user);
-        advertisement.setMotorbikeDetails(motorbikeDetails);
-
-        Advertisement savedAdvertisement = advertisementRepository.save(advertisement);
-
+        var saved = advertisementRepository.save(ad);
         if (dto.getPhotoUrls() != null && !dto.getPhotoUrls().isEmpty()) {
-            photoService.addPhotosToAdvertisement(savedAdvertisement.getId(), dto.getPhotoUrls());
+            photoService.addPhotosToAdvertisement(saved.getId(), dto.getPhotoUrls());
         }
 
-        return advertisementMapper.toResponseDto(savedAdvertisement);
+        return advertisementMapper.toResponseDto(saved);
     }
 
     @Transactional
     public AdvertisementResponseDto updateAdvertisement(Integer id, AdvertisementRequestDto dto) {
-        log.info("Updating advertisement with ID {}", id);
-        Advertisement advertisement = getAdvertisementByIdOrThrow(id);
-        validateAdvertisementOwnership(advertisement);
+        log.info("Updating advertisement id={}", id);
+        Advertisement ad = getAdvertisementByIdOrThrow(id);
+        validateAdvertisementOwnership(ad);
 
-        advertisement.setTitle(dto.getTitle());
-        advertisement.setDescription(dto.getDescription());
-        advertisement.setCity(dto.getCity());
-        advertisement.setStreet(dto.getStreet());
-        advertisement.setStreetNumber(dto.getStreetNumber());
+        advertisementMapper.updateEntityFromDto(dto, ad);
 
-        motorbikeDetailsService.updateMotorbikeDetails(advertisement.getMotorbikeDetails(), dto.getMotorbikeDetails());
-
+        motorbikeDetailsService.updateMotorbikeDetails(ad.getMotorbikeDetails(), dto.getMotorbikeDetails());
         if (dto.getPhotoUrls() != null && !dto.getPhotoUrls().isEmpty()) {
             photoService.updatePhotosForAdvertisement(id, dto.getPhotoUrls());
         }
+        ad.setUpdatedAt(LocalDateTime.now());
 
-        advertisement.setUpdatedAt(LocalDateTime.now());
-
-        return advertisementMapper.toResponseDto(advertisementRepository.save(advertisement));
+        Advertisement updated = advertisementRepository.save(ad);
+        return advertisementMapper.toResponseDto(updated);
     }
 
     @Transactional
     public void deleteAdvertisement(Integer id) {
-        log.info("Deleting advertisement with ID {}", id);
-        Advertisement advertisement = getAdvertisementByIdOrThrow(id);
-        validateAdvertisementOwnership(advertisement);
-        advertisementRepository.delete(advertisement);
+        log.info("Deleting advertisement id={}", id);
+        Advertisement ad = getAdvertisementByIdOrThrow(id);
+        validateAdvertisementOwnership(ad);
+        advertisementRepository.delete(ad);
     }
 
     public List<AdvertisementResponseDto> filterAdvertisements(AdvertisementFilterDto filterDto) {
-        log.info("Filtering advertisements with criteria: {}", filterDto);
-        Specification<Advertisement> specification = AdvertisementSpecifications.withFilters(filterDto);
-        List<Advertisement> advertisements = advertisementRepository.findAll(specification);
-        return advertisementMapper.toResponseDtoList(advertisements);
+        log.info("Filtering advertisements by make='{}', model='{}'",
+                filterDto.getMake(), filterDto.getModel());
+
+        if (filterDto.getMake() != null && filterDto.getModel() != null) {
+            makeRepository.findByName(filterDto.getMake().toUpperCase()).ifPresent(make -> {
+                List<String> validModels = modelRepository
+                        .findByMakeId(make.getId())
+                        .stream()
+                        .map(Model::getName)
+                        .toList();
+                if (!validModels.contains(filterDto.getModel())) {
+                    log.info("Clearing stale model '{}' for make '{}'",
+                            filterDto.getModel(), filterDto.getMake());
+                    filterDto.setModel(null);
+                }
+            });
+        }
+
+        Specification<Advertisement> spec = AdvertisementSpecifications.withFilters(filterDto);
+        return advertisementRepository
+                .findAll(spec)
+                .stream()
+                .map(advertisementMapper::toResponseDto)
+                .toList();
     }
 
     public AdvertisementResponseDto getAdvertisementById(Integer id) {
-        log.info("Fetching advertisement by ID {}", id);
+        log.info("Fetching advertisement id={}", id);
         return advertisementMapper.toResponseDto(getAdvertisementByIdOrThrow(id));
     }
 
@@ -112,17 +129,19 @@ public class AdvertisementService {
                 .orElseThrow(() -> new AdvertisementNotFoundException(id));
     }
 
-    private void validateAdvertisementOwnership(Advertisement advertisement) {
-        User user = userService.getAuthenticatedUser();
-        if (!advertisement.getUser().getId().equals(user.getId())) {
+    private void validateAdvertisementOwnership(Advertisement ad) {
+        var user = userService.getAuthenticatedUser();
+        if (!ad.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You can only modify your own advertisements.");
         }
     }
 
     public List<AdvertisementResponseDto> getMyAdvertisements() {
-        log.info("Fetching advertisements for authenticated user");
-        User user = userService.getAuthenticatedUser();
-        List<Advertisement> myAds = advertisementRepository.findByUserId(user.getId());
-        return advertisementMapper.toResponseDtoList(myAds);
+        log.info("Fetching my advertisements");
+        return advertisementRepository.findByUserId(
+                        userService.getAuthenticatedUser().getId()
+                ).stream()
+                .map(advertisementMapper::toResponseDto)
+                .collect(Collectors.toList());
     }
 }

@@ -19,48 +19,50 @@ public class AdvertisementController {
 
     private final AdvertisementService advertisementService;
 
-
     @GetMapping
     public ResponseEntity<List<AdvertisementResponseDto>> getAllAdvertisements() {
-        log.info("Fetching all advertisements");
+        log.info("GET /api/advertisements");
         return ResponseEntity.ok(advertisementService.getAllAdvertisements());
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<List<AdvertisementResponseDto>> filterAdvertisements(AdvertisementFilterDto filterDto) {
-        log.info("Filtering advertisements with criteria: {}", filterDto);
+    public ResponseEntity<List<AdvertisementResponseDto>> filterAdvertisements(
+            AdvertisementFilterDto filterDto) {
+        log.info("GET /api/advertisements/filter with {}", filterDto);
         return ResponseEntity.ok(advertisementService.filterAdvertisements(filterDto));
     }
 
     @PostMapping
-    public ResponseEntity<AdvertisementResponseDto> createAdvertisement(@RequestBody AdvertisementRequestDto dto) {
-        log.info("Creating new advertisement");
+    public ResponseEntity<AdvertisementResponseDto> createAdvertisement(
+            @RequestBody AdvertisementRequestDto dto) {
+        log.info("POST /api/advertisements");
         return ResponseEntity.ok(advertisementService.createAdvertisement(dto));
     }
 
     @GetMapping("/my-ads")
     public ResponseEntity<List<AdvertisementResponseDto>> getMyAdvertisements() {
-        log.info("Fetching my advertisements");
+        log.info("GET /api/advertisements/my-ads");
         return ResponseEntity.ok(advertisementService.getMyAdvertisements());
     }
 
-
     @GetMapping("/{id}")
-    public ResponseEntity<AdvertisementResponseDto> getAdvertisementById(@PathVariable Integer id) {
-        log.info("Fetching advertisement with ID {}", id);
+    public ResponseEntity<AdvertisementResponseDto> getAdvertisementById(
+            @PathVariable Integer id) {
+        log.info("GET /api/advertisements/{}", id);
         return ResponseEntity.ok(advertisementService.getAdvertisementById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AdvertisementResponseDto> updateAdvertisement(@PathVariable Integer id,
-                                                                        @RequestBody AdvertisementRequestDto dto) {
-        log.info("Updating advertisement with ID {}", id);
+    public ResponseEntity<AdvertisementResponseDto> updateAdvertisement(
+            @PathVariable Integer id,
+            @RequestBody AdvertisementRequestDto dto) {
+        log.info("PUT /api/advertisements/{}", id);
         return ResponseEntity.ok(advertisementService.updateAdvertisement(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteAdvertisement(@PathVariable Integer id) {
-        log.info("Deleting advertisement with ID {}", id);
+    public ResponseEntity<Void> deleteAdvertisement(@PathVariable Integer id) {
+        log.info("DELETE /api/advertisements/{}", id);
         advertisementService.deleteAdvertisement(id);
         return ResponseEntity.noContent().build();
     }
