@@ -25,15 +25,14 @@ public class MotorbikeDetailsService {
     @Transactional
     public MotorbikeDetails createMotorbikeDetails(MotorbikeDetailsRequestDto dto) {
         log.info("Creating MotorbikeDetails for make={} model={}", dto.getMake(), dto.getModel());
-        // lookup model by name (DTO carries only strings)
         Model model = modelRepository.findByName(dto.getModel().toUpperCase())
                 .orElseThrow(() -> new EntityNotFoundException("Model not found: " + dto.getModel()));
-        // verify the model belongs to the given make
+
         if (!model.getMake().getName().equalsIgnoreCase(dto.getMake())) {
             throw new IllegalArgumentException(
                     "Model " + dto.getModel() + " does not belong to make " + dto.getMake());
         }
-        // map DTO → entity, set relationship, and save
+
         MotorbikeDetails details = motorbikeDetailsMapper.toEntity(dto);
         details.setModel(model);
         return motorbikeDetailsRepository.save(details);
@@ -45,14 +44,14 @@ public class MotorbikeDetailsService {
             MotorbikeDetailsRequestDto dto) {
         log.info("Updating MotorbikeDetails id={} to make={} model={}",
                 existingDetails.getId(), dto.getMake(), dto.getModel());
-        // same lookup + verification logic
+
         Model model = modelRepository.findByName(dto.getModel().toUpperCase())
                 .orElseThrow(() -> new EntityNotFoundException("Model not found: " + dto.getModel()));
         if (!model.getMake().getName().equalsIgnoreCase(dto.getMake())) {
             throw new IllegalArgumentException(
                     "Model " + dto.getModel() + " does not belong to make " + dto.getMake());
         }
-        // map DTO → entity, preserve ID, set model, save, and map back to DTO
+
         MotorbikeDetails updated = motorbikeDetailsMapper.toEntity(dto);
         updated.setId(existingDetails.getId());
         updated.setModel(model);
