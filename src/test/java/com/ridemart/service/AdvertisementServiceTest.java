@@ -201,6 +201,7 @@ class AdvertisementServiceTest {
         assertEquals(testResponseDto.getId(), result.getId());
         verify(advertisementRepository).findById(1);
         verify(userService).getAuthenticatedUser();
+        verify(advertisementMapper).updateEntityFromDto(testRequestDto, testAdvertisement);
         verify(motorbikeDetailsService).updateMotorbikeDetails(any(), any());
         verify(advertisementRepository).save(any());
         verify(advertisementMapper).toResponseDto(any());

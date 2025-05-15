@@ -72,6 +72,8 @@ public class AdvertisementService {
         Advertisement ad = getAdvertisementByIdOrThrow(id);
         validateAdvertisementOwnership(ad);
 
+        advertisementMapper.updateEntityFromDto(dto, ad);
+
         motorbikeDetailsService.updateMotorbikeDetails(ad.getMotorbikeDetails(), dto.getMotorbikeDetails());
         if (dto.getPhotoUrls() != null && !dto.getPhotoUrls().isEmpty()) {
             photoService.updatePhotosForAdvertisement(id, dto.getPhotoUrls());
